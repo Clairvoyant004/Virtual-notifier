@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="refresh" content="20"> <!-- Refresh every 5 minutes -->
+  <title>League Streaks</title>
+    <style>
+     body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #2c2c2c, #3e2723, #1b1b1b);
+      padding-top: 2rem;
+      padding-bottom: 5rem;
+    }
+
+    .table-container {
+      width: 90%;
+      max-width: 500px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+      border: 1.4px solid #d4af37;
+      overflow: hidden;
+    }
+
+    h2 {
+      text-align: center;
+      margin: 20px 0;
+      color: #d4af37;
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+      font-weight: 700;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.5)
+      ;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #f0e4d7;
+    }
+
+    th,
+    td {
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 0, 0.2);
+    }
+
+    th {
+      font-size: 1.2rem;
+      background: rgba(212, 175, 55, 0.15);
+      font-weight: 600;
+      color: #ffd700;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transition: 0.3s ease;
+    }
+
+    /* Responsive */
+    @media (max-width: 500px) {
+
+      th,
+      td {
+        padding: 10px;
+        font-size: 0.85rem;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="table-container">
+  <h1>League Streaks</h1>
+
+  {% if season %}
+    <p>Season: {{ season.season_id }}</p>
+  {% else %}
+    <p>No active season yet.</p>
+  {% endif %}
+
+  {% if league_tables %}
+    {% for league, teams in league_tables.items %}
+      <h2>{{ league }}</h2>
+      <table>
+        <thead>
+          <tr><th>Team</th><th>Streak</th><th>W</th><th>D</th><th>L</th></tr>
+        </thead>
+        <tbody>
+          {% for t in teams %}
+            <tr>
+              <td>{{ t.name }}</td>
+              <td>{{ t.streak }}</td>
+              <td>{{ t.wins }}</td>
+              <td>{{ t.draws }}</td>
+              <td>{{ t.losses }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  {% else %}
+    <p>No teams available yet.</p>
+  {% endif %}
+</div>  
+</body>
+</html>

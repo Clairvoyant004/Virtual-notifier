@@ -1,0 +1,5 @@
+Django>=4.2,<5.0
+psycopg2-binary>=2.9
+requests>=2.31
+playwright>=1.49
+gunicorn>=21.2
