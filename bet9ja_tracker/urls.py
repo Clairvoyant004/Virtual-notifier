@@ -21,6 +21,6 @@ from django.shortcuts import redirect
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("leagues/", include("tracker.urls")),
-    path("", lambda request: redirect("leagues-overview")),  # redirect root → league list
+    path("", lambda request: redirect("league-home")),  # redirect root → league list
 ]
 

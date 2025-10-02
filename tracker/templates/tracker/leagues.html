@@ -1,11 +1,14 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="refresh" content="20"> <!-- Refresh every 5 minutes -->
-  <title>League Streaks</title>
-    <style>
-     body {
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+  <title>{% block title %}League Tracker{% endblock %}</title>
+</head>
+<style>
+   body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
       display: flex;
@@ -59,8 +62,22 @@
       font-weight: 600;
       color: #ffd700;
     }
-
-    tr:hover {
+    .nav-button {
+      background: rgba(212, 175, 55, 0.15);
+      border: none;
+      border-radius: 12px;
+      padding: 10px 15px;
+      margin: 2px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+    a {
+      text-decoration: none;
+      color: #e1dcd8;
+      font-weight: 500;
+    
+    }
+    tr:hover, .nav-button:hover {
       background: rgba(255, 255, 255, 0.1);
       transition: 0.3s ease;
     }
@@ -78,41 +95,26 @@
         font-size: 1.3rem;
       }
     }
-  </style>
-</head>
+</style>
 <body>
-<div class="table-container">
-  <h1>League Streaks</h1>
+  <div class="table-container">
+    <h2>🏆 LEAGUE TABLE 🏆</h2>
 
-  {% if season %}
-    <p>Season: {{ season.season_id }}</p>
-  {% else %}
-    <p>No active season yet.</p>
-  {% endif %}
+    <!-- Navigation buttons for all leagues -->
+    <div class="league-nav">
+      {% for nav_league in all_leagues %}
+      <button class="nav-button">
+        <a href="{% url 'league-detail' nav_league.id %}">
+          {{ nav_league.name }}
+        </a>
+      </button>
+      {% empty %}
+        <span>No leagues yet</span>
+      {% endfor %}
+    </div>
 
-  {% if league_tables %}
-    {% for league, teams in league_tables.items %}
-      <h2>{{ league }}</h2>
-      <table>
-        <thead>
-          <tr><th>Team</th><th>Streak</th><th>W</th><th>D</th><th>L</th></tr>
-        </thead>
-        <tbody>
-          {% for t in teams %}
-            <tr>
-              <td>{{ t.name }}</td>
-              <td>{{ t.streak }}</td>
-              <td>{{ t.wins }}</td>
-              <td>{{ t.draws }}</td>
-              <td>{{ t.losses }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% endfor %}
-  {% else %}
-    <p>No teams available yet.</p>
-  {% endif %}
-</div>  
+    {% block content %}
+    {% endblock %}
+  </div>
 </body>
 </html>

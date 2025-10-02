@@ -1,6 +1,14 @@
 from django.db import models
 from django.utils import timezone
 
+class League(models.Model):
+    name = models.CharField(max_length=255)
+    external_id = models.BigIntegerField(unique=True)  # season id or competition id
+
+    def __str__(self):
+        return self.name
+
+
 class Season(models.Model):
     season_id = models.CharField(max_length=64, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -13,26 +21,19 @@ class Season(models.Model):
 
 
 class Team(models.Model):
-    name = models.CharField(max_length=255)
-    league = models.CharField(max_length=255, blank=True, null=True)
-    current_season = models.ForeignKey(Season, on_delete=models.CASCADE, related_name="teams")
+    name = models.CharField(max_length=100)
+    current_season = models.ForeignKey(Season, on_delete=models.CASCADE)
+    league = models.ForeignKey(League, on_delete=models.CASCADE, null=True, blank=True)  # ✅ now FK
     streak = models.IntegerField(default=0)
-    wins = models.PositiveIntegerField(default=0)
-    losses = models.PositiveIntegerField(default=0)
-    draws = models.PositiveIntegerField(default=0)
-    last_updated = models.DateTimeField(auto_now=True)
-    league = models.CharField(max_length=100, blank=True, null=True)  # ✅ NEW
-    processed = models.BooleanField(default=False)
+    wins = models.IntegerField(default=0)
+    losses = models.IntegerField(default=0)
+    draws = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ("name", "current_season")
 
-    def reset_streak(self):
-        self.streak = 0
-        self.save(update_fields=["streak", "last_updated"])
-
     def __str__(self):
-        return f"{self.name} ({self.current_season.season_id})"
+        return f"{self.name} ({self.league})"
 
 
 class Match(models.Model):

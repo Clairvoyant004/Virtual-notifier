@@ -4,23 +4,17 @@ import requests
 from datetime import datetime
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from tracker.models import Season, Team, Match
+from tracker.models import Season, Team, Match, League
 from playwright.sync_api import sync_playwright
-
 
 
 API_FEED_FMT = (
     "https://vgls-vs001.akamaized.net/vfl/feeds/?/bet9javirtuals/en/"
     "Africa:Lagos/gismo/stats_season_lastx/{season_id}/13"
 )
-LEAGUE_MAP = {
-    0: "English League",
-    2: "German League",
-    3: "Spanish League",
-    4: "Italian League",
-    5: "French League",
-    7: "Portuguese League",
-}
+
+# we only care about these offsets relative to base season
+RELEVANT_OFFSETS = [0, 2, 3, 4, 5, 6, 7]
 
 
 class Command(BaseCommand):
@@ -48,35 +42,33 @@ class Command(BaseCommand):
                     season.save()
                     self.stdout.write(f"🏁 New season {season.season_id} created")
 
-            # process range of 7
-            # at the top of run_tracker.py
-            RELEVANT_OFFSETS = [0, 2, 3, 4, 5, 7]
-
-# inside handle()
             base_id = int(current_season_id)
-            for offset in RELEVANT_OFFSETS:
-                   sid = str(base_id + offset)
-                   matches = self.fetch_all_matches(sid)
-                   if matches:
-                      new_count = self.process_matches_for_season(matches, sid)
-                      if new_count:
-                         self.stdout.write(f"✅ Processed {new_count} match(es) for {sid}")
 
-            # check season end
-            base_matches = self.fetch_all_matches(current_season_id)
+            # loop relevant leagues
+            for offset in RELEVANT_OFFSETS:
+                sid = str(base_id + offset)
+                matches, season_data = self.fetch_all_matches(sid)
+                if matches:
+                    league_obj = self.get_or_create_league(season_data)
+                    new_count = self.process_matches_for_season(matches, sid, league_obj)
+                    if new_count:
+                        self.stdout.write(f"✅ Processed {new_count} match(es) for {league_obj.name} ({sid})")
+
+            # check season end (English league is base reference)
+            base_matches, _ = self.fetch_all_matches(current_season_id)
             if base_matches and self.season_has_ended(base_matches):
                 season.active = False
                 season.ended_at = datetime.utcnow()
                 season.save()
                 self.stdout.write(f"🏁 Season {current_season_id} ended")
-                current_season_id = None  # will capture again
+                current_season_id = None  # reset
 
             time.sleep(poll_interval)
 
     def capture_new_season_id(self):
         self.stdout.write("🎭 Launching Playwright to capture new season ID...")
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=False)  # show browser to debug
+            browser = p.chromium.launch(headless=False)
             page = browser.new_page()
             page.goto("https://st-cdn001.akamaized.net/bet9javirtuals/en/1/category/1111")
 
@@ -95,7 +87,7 @@ class Command(BaseCommand):
             except Exception:
                 self.stdout.write("❌ Could not find English League link")
 
-            page.wait_for_timeout(10000)  # wait 10s to capture
+            page.wait_for_timeout(10000)
             browser.close()
 
         if captured:
@@ -108,7 +100,6 @@ class Command(BaseCommand):
         self.stdout.write("⚠️ No season ID captured")
         return None
 
-
     def fetch_all_matches(self, season_id):
         url = API_FEED_FMT.format(season_id=season_id)
         try:
@@ -117,25 +108,35 @@ class Command(BaseCommand):
             data = r.json()
         except Exception as e:
             self.stdout.write(f"API error {season_id}: {e}")
-            return None
+            return None, None
 
         try:
             doc = data.get("doc", [None])[0]
-            round_data = doc.get("data") if doc else []
-            matches = []
-            if isinstance(round_data, dict):
-                matches = round_data.get("matches", []) or []
-            elif isinstance(round_data, list):
-                for rd in round_data:
-                    if "matches" in rd:
-                        matches.extend(rd["matches"])
-            return matches
+            if not doc:
+                return None, None
+            season_data = doc.get("data", {}).get("season") or doc.get("data", {})
+            matches = doc.get("data", {}).get("matches", [])
+            return matches, season_data
         except Exception as e:
             self.stdout.write(f"Parse error {season_id}: {e}")
-            return None
+            return None, None
+
+    def get_or_create_league(self, season_data):
+        """Create or update a League record from season JSON."""
+        league_id = int(season_data["_id"])
+        league_name = season_data.get("name", f"League {league_id}")
+
+        league, created = League.objects.get_or_create(
+            external_id=league_id,
+            defaults={"name": league_name}
+        )
+        if not created and league.name != league_name:
+            league.name = league_name
+            league.save(update_fields=["name"])
+        return league
 
     @transaction.atomic
-    def process_matches_for_season(self, matches, season_id):
+    def process_matches_for_season(self, matches, season_id, league_obj):
         new_count = 0
         season_obj, _ = Season.objects.get_or_create(season_id=str(season_id))
         sorted_matches = sorted(matches, key=lambda x: (x.get("round", 0), x.get("_id", 0)))
@@ -153,19 +154,6 @@ class Command(BaseCommand):
             away_name = m["teams"]["away"]["name"]
             hg, ag = int(res["home"]), int(res["away"])
 
-        # 🔥 Try to extract league dynamically
-            league_name = None
-            if "competition" in m and isinstance(m["competition"], dict):
-                league_name = m["competition"].get("name")
-            elif "league" in m:
-                league_name = m.get("league")
-                
-            if not league_name:
-                sid = int(season_id)
-                base_id = sid // 7 * 7
-                offset = sid - base_id
-                league_name = LEAGUE_MAP.get(offset, f"League {offset}")  # fallback if not found
-
             Match.objects.create(
                 match_id=mid,
                 season=season_obj,
@@ -174,44 +162,38 @@ class Command(BaseCommand):
                 away_team=away_name,
                 home_score=hg,
                 away_score=ag,
-                league = league_name,
+                league=league_obj,
                 processed=True,
             )
 
             home, _ = Team.objects.get_or_create(
                 name=home_name,
                 current_season=season_obj,
-                defaults={"league": league_name, "streak": 0}
+                defaults={"league": league_obj, "streak": 0}
             )
             away, _ = Team.objects.get_or_create(
                 name=away_name,
                 current_season=season_obj,
-                defaults={"league": league_name, "streak": 0}
+                defaults={"league": league_obj, "streak": 0}
             )
-            # ✅ Always enforce correct league
-            if not home.league or home.league != league_name:
-               home.league = league_name
-               home.save(update_fields=["league"])
 
-            if not away.league or away.league != league_name:
-               away.league = league_name
-               away.save(update_fields=["league"])
+            # force correct league
+            if home.league != league_obj:
+                home.league = league_obj
+            if away.league != league_obj:
+                away.league = league_obj
 
-
+            # update streaks only
             if hg == ag:
-                home.draws += 1
-                away.draws += 1
                 home.streak = 0
                 away.streak = 0
             else:
                 if hg > ag:
-                    home.wins += 1
-                    away.losses += 1
+                    home.streak = (home.streak or 0) + 1
+                    away.streak = 0
                 else:
-                    away.wins += 1
-                    home.losses += 1
-                home.streak = (home.streak or 0) + 1
-                away.streak = (away.streak or 0) + 1
+                    away.streak = (away.streak or 0) + 1
+                    home.streak = 0
 
             home.save()
             away.save()
@@ -227,4 +209,8 @@ class Command(BaseCommand):
         if max_round < 30:
             return False
         last_round_matches = [m for m in matches if m.get("round", 0) == max_round]
-        return all(m.get("result", {}).get("home") is not None and m.get("result", {}).get("away") is not None for m in last_round_matches)
+        return all(
+            m.get("result", {}).get("home") is not None and
+            m.get("result", {}).get("away") is not None
+            for m in last_round_matches
+        )
