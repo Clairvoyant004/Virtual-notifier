@@ -8,7 +8,6 @@
     <thead>
       <tr>
         <th>TEAMS</th>
-        <th>LEAGUE</th>
         <th>STREAKS</th>
       </tr>
     </thead>
@@ -16,12 +15,11 @@
       {% for team in teams %}
         <tr>
           <td>{{ team.name }}</td>
-          <td>{{ team.league }}</td>
           <td>{{ team.streak }}</td>
         </tr>
       {% empty %}
         <tr>
-          <td colspan="3">No teams yet.</td>
+          <td colspan="2">No teams yet.</td>
         </tr>
       {% endfor %}
     </tbody>

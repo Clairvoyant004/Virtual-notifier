@@ -8,18 +8,71 @@
   <title>{% block title %}League Tracker{% endblock %}</title>
 </head>
 <style>
-   body {
+ body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      flex-direction: column;
       background: linear-gradient(135deg, #2c2c2c, #3e2723, #1b1b1b);
-      padding-top: 2rem;
-      padding-bottom: 5rem;
+      align-items: center;
+      padding-bottom: 4.5rem;
+      justify-content: flex-start;
+      min-height: 100vh;
     }
 
+    /* Navbar*/
+    .navbar{
+      width: 100%;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px 30px;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.5);
+      border-bottom: 1.5px solid #d4af37;
+      box-sizing: border-box;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo{
+      color: #d4af37;
+      font-weight: 700;
+      font-size: 1.5rem;
+      text-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+    }
+
+    .nav-links{
+      list-style: none;
+      display: flex;
+      gap: 20px;
+    }
+
+    .nav-links li a {
+      text-decoration: none;
+      color: #f0e4d7;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 8px;
+      transition: 0.3s;
+    }
+
+    .nav-links li a:hover{
+      background: rgba(212, 175, 55, 0.2);
+      color: #ffd700;
+    }
+
+    .nav-links li a.active{
+       background: rgba(212, 175, 55, 0.3);
+       box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+      color: #ffd700;
+    }
+
+
+    /* Table Container*/
     .table-container {
       width: 90%;
       max-width: 500px;
@@ -27,8 +80,9 @@
       border-radius: 20px;
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
       border: 1.4px solid #d4af37;
+      margin-top: 30px;
       overflow: hidden;
     }
 
@@ -62,45 +116,102 @@
       font-weight: 600;
       color: #ffd700;
     }
-    .nav-button {
-      background: rgba(212, 175, 55, 0.15);
-      border: none;
-      border-radius: 12px;
-      padding: 10px 15px;
-      margin: 2px;
-      cursor: pointer;
-      transition: 0.3s ease;
-    }
-    a {
-      text-decoration: none;
-      color: #e1dcd8;
-      font-weight: 500;
-    
-    }
-    tr:hover, .nav-button:hover {
+
+    tr:hover {
       background: rgba(255, 255, 255, 0.1);
       transition: 0.3s ease;
     }
 
+      .hamburger {
+    display: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #d4af37;
+  }
     /* Responsive */
-    @media (max-width: 500px) {
+  @media (max-width: 500px) {
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    position: relative; /* ensures dropdown anchors to navbar */
+    width: 100%;
+  }
 
-      th,
-      td {
-        padding: 10px;
-        font-size: 0.85rem;
-      }
+  .logo {
+    font-size: 1.2rem;
+    flex: 1;
+  }
 
-      h2 {
-        font-size: 1.3rem;
-      }
-    }
+  .hamburger {
+    display: block;
+    font-size: 1.5rem;
+    color: #d4af37;
+    cursor: pointer;
+    z-index: 3; /* higher than nav-links */
+  }
+
+  .nav-links {
+    position: absolute;
+    top: 100%;   
+    left: 0; 
+    width: 100%; 
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(15px);
+    border-top: 1px solid #d4af37;
+    flex-direction: column;
+    padding: 10px 0;
+    display: none;
+    z-index: 2; 
+
+  }
+
+  .nav-links.show {
+    display: flex;
+  }
+
+  .nav-links li {
+    width: 100%;
+    text-align: center;
+    margin: 5px 0;
+  }
+
+  .nav-links li a {
+    padding: 10px 15px;
+    display: block;
+  }
+
+
+  th,
+  td {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+  }
+}
 </style>
 <body>
+  <nav class="navbar">
+    <div class="logo"> League Table</div>
+    <div class="hamburger" onclick="toggleMenu()">☰</div>
+    <ul class="nav-links">
+      {% for nav_league in all_leagues %}
+        <li><a href="{% url 'league-detail' nav_league.id %}" class="active">{{ nav_league.name }}</a></li>
+        {% empty %}
+          <span>No leagues yet</span>
+        {% endfor %}
+      <li><a href="{% url 'leagues' %}">All Leagues</a></li>
+    </ul>
+  </nav>
+
   <div class="table-container">
     <h2>🏆 LEAGUE TABLE 🏆</h2>
 
-    <!-- Navigation buttons for all leagues -->
+    <!-- Navigation buttons for all leagues 
     <div class="league-nav">
       {% for nav_league in all_leagues %}
       <button class="nav-button">
@@ -111,10 +222,16 @@
       {% empty %}
         <span>No leagues yet</span>
       {% endfor %}
-    </div>
+    </div>-->
 
     {% block content %}
     {% endblock %}
   </div>
+  <script>
+    function toggleMenu() {
+      const navLinks = document.querySelector('.nav-links');
+      navLinks.classList.toggle('show');
+    }
+  </script>
 </body>
 </html>
