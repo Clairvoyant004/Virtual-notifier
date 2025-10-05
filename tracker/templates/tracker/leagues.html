@@ -1,210 +1,223 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{% static 'style.css' %}">
+  <link rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+
   <title>{% block title %}League Tracker{% endblock %}</title>
 </head>
 <style>
- body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      flex-direction: column;
-      background: linear-gradient(135deg, #2c2c2c, #3e2723, #1b1b1b);
-      align-items: center;
-      padding-bottom: 4.5rem;
-      justify-content: flex-start;
-      min-height: 100vh;
-    }
-
-    /* Navbar*/
-    .navbar{
-      width: 100%;
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 15px 30px;
-      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.5);
-      border-bottom: 1.5px solid #d4af37;
-      box-sizing: border-box;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .logo{
-      color: #d4af37;
-      font-weight: 700;
-      font-size: 1.5rem;
-      text-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
-    }
-
-    .nav-links{
-      list-style: none;
-      display: flex;
-      gap: 20px;
-    }
-
-    .nav-links li a {
-      text-decoration: none;
-      color: #f0e4d7;
-      font-weight: 500;
-      padding: 5px 10px;
-      border-radius: 8px;
-      transition: 0.3s;
-    }
-
-    .nav-links li a:hover{
-      background: rgba(212, 175, 55, 0.2);
-      color: #ffd700;
-    }
-
-    .nav-links li a.active{
-       background: rgba(212, 175, 55, 0.3);
-       box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-      color: #ffd700;
-    }
-
-
-    /* Table Container*/
-    .table-container {
-      width: 90%;
-      max-width: 500px;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
-      border: 1.4px solid #d4af37;
-      margin-top: 30px;
-      overflow: hidden;
-    }
-
-    h2 {
-      text-align: center;
-      margin: 20px 0;
-      color: #d4af37;
-      font-size: 1.8rem;
-      letter-spacing: 2px;
-      font-weight: 700;
-      text-shadow: 0 0 10px rgba(212, 175, 55, 0.5)
-      ;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      color: #f0e4d7;
-    }
-
-    th,
-    td {
-      padding: 15px;
-      text-align: center;
-      border-bottom: 1px solid rgba(255, 255, 0, 0.2);
-    }
-
-    th {
-      font-size: 1.2rem;
-      background: rgba(212, 175, 55, 0.15);
-      font-weight: 600;
-      color: #ffd700;
-    }
-
-    tr:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transition: 0.3s ease;
-    }
-
-      .hamburger {
-    display: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #d4af37;
+  body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #2c2c2c, #3e2723, #1b1b1b);
+    align-items: center;
+    padding-bottom: 4.5rem;
+    justify-content: flex-start;
+    min-height: 100vh;
   }
-    /* Responsive */
-  @media (max-width: 500px) {
+
+  /* Navbar*/
   .navbar {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
-    position: relative; /* ensures dropdown anchors to navbar */
-    width: 100%;
+    padding: 15px 30px;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.5);
+    border-bottom: 1.5px solid #d4af37;
+    box-sizing: border-box;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   .logo {
-    font-size: 1.2rem;
-    flex: 1;
-  }
-
-  .hamburger {
-    display: block;
-    font-size: 1.5rem;
     color: #d4af37;
-    cursor: pointer;
-    z-index: 3; /* higher than nav-links */
+    font-weight: 700;
+    font-size: 1.75rem;
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
   }
 
   .nav-links {
-    position: absolute;
-    top: 100%;   
-    left: 0; 
-    width: 100%; 
-    background: rgba(20, 20, 20, 0.95);
-    backdrop-filter: blur(15px);
-    border-top: 1px solid #d4af37;
-    flex-direction: column;
-    padding: 10px 0;
-    display: none;
-    z-index: 2; 
-
-  }
-
-  .nav-links.show {
+    list-style: none;
     display: flex;
-  }
-
-  .nav-links li {
-    width: 100%;
-    text-align: center;
-    margin: 5px 0;
+    gap: 20px;
   }
 
   .nav-links li a {
-    padding: 10px 15px;
-    display: block;
+    text-decoration: none;
+    color: #f0e4d7;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 8px;
+    transition: 0.3s;
+    display: inline-block;
+    max-width: 180px;
+    text-align: left;
+    word-break: break-word;
+  }
+
+  .nav-links li a:hover {
+    background: rgba(212, 175, 55, 0.2);
+    color: #ffd700;
+  }
+
+  .nav-links li a.active {
+    background: rgba(212, 175, 55, 0.3);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+    color: #ffd700;
   }
 
 
-  th,
-  td {
-    padding: 10px;
-    font-size: 0.85rem;
+
+  /* Table Container*/
+  .table-container {
+    width: 90%;
+    max-width: 500px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    border: 1.4px solid #d4af37;
+    margin-top: 30px;
+    overflow: hidden;
   }
 
   h2 {
-    font-size: 1.4rem;
+    text-align: center;
+    margin: 20px 0;
+    color: #d4af37;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
   }
-}
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #f0e4d7;
+  }
+
+  th,
+  td {
+    padding: 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 0, 0.2);
+  }
+
+  th {
+    font-size: 1.2rem;
+    background: rgba(212, 175, 55, 0.15);
+    font-weight: 600;
+    color: #ffd700;
+  }
+
+  tr:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transition: 0.3s ease;
+  }
+
+  .hamburger {
+    display: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #d4af37;
+  }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      position: relative;
+      /* ensures dropdown anchors to navbar */
+      width: 100%;
+    }
+
+    .logo {
+      font-size: 1.2rem;
+      flex: 1;
+    }
+
+    .hamburger {
+      display: block;
+      font-size: 1.5rem;
+      color: #d4af37;
+      cursor: pointer;
+      z-index: 3;
+      /* higher than nav-links */
+    }
+
+    .nav-links {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      background: rgba(20, 20, 20, 0.95);
+      backdrop-filter: blur(15px);
+      border-top: 1px solid #d4af37;
+      flex-direction: column;
+      padding: 10px 0;
+      display: none;
+      z-index: 2;
+
+    }
+
+    .nav-links.show {
+      display: flex;
+    }
+
+    .nav-links li {
+      width: 100%;
+      text-align: center;
+      margin: 5px 0;
+    }
+
+    .nav-links li a {
+      padding: 10px 15px;
+      display: block;
+      white-space: nowrap;
+      max-width: 100%;
+      text-align: center;
+    }
+
+
+    th,
+    td {
+      padding: 10px;
+      font-size: 0.85rem;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+    }
+  }
 </style>
+
 <body>
   <nav class="navbar">
-    <div class="logo"> League Table</div>
+    <div class="logo"> League Tracker</div>
     <div class="hamburger" onclick="toggleMenu()">☰</div>
     <ul class="nav-links">
       {% for nav_league in all_leagues %}
-        <li><a href="{% url 'league-detail' nav_league.id %}" class="active">{{ nav_league.name }}</a></li>
-        {% empty %}
-          <span>No leagues yet</span>
-        {% endfor %}
-      <li><a href="{% url 'leagues' %}">All Leagues</a></li>
+      <li><a href="{% url 'league-detail' nav_league.id %}">{{ nav_league.name }}</a></li>
+      {% empty %}
+      <span>No leagues yet</span>
+      {% endfor %}
     </ul>
   </nav>
 
@@ -232,6 +245,15 @@
       const navLinks = document.querySelector('.nav-links');
       navLinks.classList.toggle('show');
     }
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      let current = window.location.pathname;
+      let linkPath = new URL(link.href).pathname;
+      if (current === linkPath) {
+        link.classList.add('active');
+      }
+    });
+
   </script>
 </body>
+
 </html>
