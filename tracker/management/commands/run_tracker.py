@@ -188,13 +188,9 @@ class Command(BaseCommand):
                 home.streak = 0
                 away.streak = 0
             else:
-                if hg > ag:
-                    home.streak = (home.streak or 0) + 1
-                    away.streak = 0
-                else:
-                    away.streak = (away.streak or 0) + 1
-                    home.streak = 0
-
+                home.streak = (home.streak or 0) + 1
+                away.streak = (away.streak or 0) + 1
+                
             home.save()
             away.save()
             new_count += 1
