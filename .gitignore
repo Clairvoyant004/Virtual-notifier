@@ -1,0 +1,44 @@
+# Django & Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+.env
+*.sqlite3
+db.sqlite3
+
+# Static and media files
+staticfiles/
+media/
+
+# Playwright
+playwright/.cache/
+.playwright/
+
+# Virtual environments
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Docker
+*.pid
+*.log
+docker-compose.override.yml
+
+# Fly.io temporary build files
+fly.toml~
+.fly/
