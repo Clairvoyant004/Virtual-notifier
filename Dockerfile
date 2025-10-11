@@ -1,27 +1,29 @@
 # ---------- Base image ----------
-FROM python:3.12-slim
+FROM python:3.12
 
-# ---------- System deps ----------
+# ---------- System dependencies ----------
 RUN apt-get update && apt-get install -y \
     wget xvfb fonts-liberation libnss3 libatk-bridge2.0-0 libxkbcommon0 \
     libgtk-3-0 libdrm2 libgbm1 libasound2 libxshmfence1 libxrandr2 \
     && rm -rf /var/lib/apt/lists/*
 
-# ---------- Install Playwright ----------
-RUN pip install playwright
+# ---------- Install Playwright and Chromium ----------
+RUN pip install --no-cache-dir playwright
 RUN playwright install --with-deps chromium
 
-# ---------- Copy project ----------
+# ---------- Set working directory and copy project ----------
 WORKDIR /app
 COPY . /app
 
-# ---------- Install Python deps ----------
+# ---------- Install Python dependencies ----------
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ---------- Set environment ----------
+# ---------- Collect static files (for Django apps) ----------
+RUN python manage.py collectstatic --noinput
+
+# ---------- Set environment variables ----------
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=bet9ja_tracker.settings
 
 # ---------- Start command ----------
-# The "web" process will run Django
-CMD ["gunicorn", "bet9ja_tracker.wsgi:application", "--bind", "0.0.0.0:8080"]
+CMD ["gunicorn", "bet9ja_tracker.wsgi:application", "--bind", "0.0.0.0:8000"]
