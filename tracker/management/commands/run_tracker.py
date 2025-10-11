@@ -6,6 +6,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from tracker.models import Season, Team, Match, League
 from playwright.sync_api import sync_playwright
+from tracker.utils.playwright_helpers import discover_season_id_via_playwright
+
 
 
 API_FEED_FMT = (
@@ -68,7 +70,14 @@ class Command(BaseCommand):
     def capture_new_season_id(self):
         self.stdout.write("🎭 Launching Playwright to capture new season ID...")
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=False,args=[
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-infobars",
+        "--disable-gpu",
+        "--window-position=-32000,-32000",  # hides offscreen
+        "--window-size=1,1",
+    ])
             page = browser.new_page()
             page.goto("https://st-cdn001.akamaized.net/bet9javirtuals/en/1/category/1111")
 

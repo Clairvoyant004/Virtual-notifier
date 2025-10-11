@@ -1,5 +1,5 @@
 app = "virtual-notifier"
-primary_region = "ams" # you can choose "lhr", "cdg", "mad" etc. depending on your location
+primary_region = "jnb" 
 
 [build]
   dockerfile = "Dockerfile"
