@@ -11,10 +11,9 @@ primary_region = "jnb"
 [deploy]
   release_command = "sh -c 'playwright install chromium && python manage.py migrate'"
 
-
 [processes]
   web = "gunicorn bet9ja_tracker.wsgi:application --bind 0.0.0.0:8000"
-  worker = "python manage.py run_tracker"
+  worker = "sh -c 'xvfb-run --auto-servernum --server-args=\"-screen 0 1280x1024x24\" python manage.py run_tracker || sleep infinity'"
 
 [[services]]
   internal_port = 8000
@@ -40,3 +39,7 @@ primary_region = "jnb"
     grace_period = "5s"
     restart_limit = 0
 
+[[vm]]
+  processes = ["worker"]
+  size = "shared-cpu-1x"
+  restart = { policy = "always", retries = 10 }

@@ -12,8 +12,8 @@ RUN pip install --no-cache-dir playwright
 RUN playwright install --with-deps chromium
 
 # ---------- Set working directory and copy project ----------
-WORKDIR /app
-COPY . /app
+WORKDIR /bet9ja_tracker
+COPY . /bet9ja_tracker
 
 # ---------- Install Python dependencies ----------
 RUN pip install --no-cache-dir -r requirements.txt
