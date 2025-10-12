@@ -9,7 +9,8 @@ primary_region = "jnb"
   PYTHONUNBUFFERED = "1"
 
 [deploy]
-  release_command = "playwright install --with-deps chromium && python manage.py migrate"
+  release_command = "sh -c 'playwright install chromium && python manage.py migrate'"
+
 
 [processes]
   web = "gunicorn bet9ja_tracker.wsgi:application --bind 0.0.0.0:8000"
@@ -18,7 +19,7 @@ primary_region = "jnb"
 [[services]]
   internal_port = 8000
   protocol = "tcp"
-  process = "web"
+  processes = ["web"]
 
   [[services.ports]]
     handlers = ["http"]
@@ -28,13 +29,14 @@ primary_region = "jnb"
     handlers = ["tls", "http"]
     port = 443
 
-[checks]
-  [checks.http]
-    type = "http"
-    interval = 10000
-    timeout = 2000
-    method = "get"
-    path = "/"
-    protocol = "http"
-    grace_period = "10s"
+  [services.concurrency]
+    type = "connections"
+    soft_limit = 20
+    hard_limit = 25
+
+  [services.tcp_checks]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "5s"
     restart_limit = 0
+
