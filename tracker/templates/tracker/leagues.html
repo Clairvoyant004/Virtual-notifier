@@ -210,11 +210,23 @@
 
 <body>
   <nav class="navbar">
-    <div class="logo"> League Tracker</div>
+    <div class="logo">League Tracker</div>
     <div class="hamburger" onclick="toggleMenu()">☰</div>
     <ul class="nav-links">
+      <!-- Add the base season dynamically -->
+      <li>
+        <a href="{% url 'league-home' %}" class="{% if not current_league %}active{% endif %}">
+          Base Season(Click on leagues to view details)
+        </a>
+      </li>
+
+      <!-- Loop through all leagues -->
       {% for nav_league in all_leagues %}
-      <li><a href="{% url 'league-detail' nav_league.id %}">{{ nav_league.name }}</a></li>
+      <li>
+        <a href="{% url 'league-detail' nav_league.id %}" class="{% if current_league and current_league.id == nav_league.id %}active{% endif %}">
+          {{ nav_league.name|cut:"Virtual Football " }}
+        </a>
+      </li>
       {% empty %}
       <span>No leagues yet</span>
       {% endfor %}
@@ -224,22 +236,28 @@
   <div class="table-container">
     <h2>🏆 LEAGUE TABLE 🏆</h2>
 
-    <!-- Navigation buttons for all leagues 
-    <div class="league-nav">
-      {% for nav_league in all_leagues %}
-      <button class="nav-button">
-        <a href="{% url 'league-detail' nav_league.id %}">
-          {{ nav_league.name }}
-        </a>
-      </button>
-      {% empty %}
-        <span>No leagues yet</span>
-      {% endfor %}
-    </div>-->
-
-    {% block content %}
-    {% endblock %}
+    {% if no_teams_message %}
+      <p>{{ no_teams_message }}</p>
+    {% else %}
+      <table>
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Streak</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for team in teams %}
+          <tr>
+            <td>{{ team.name }}</td>
+            <td>{{ team.streak }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
   </div>
+
   <script>
     function toggleMenu() {
       const navLinks = document.querySelector('.nav-links');
@@ -252,7 +270,6 @@
         link.classList.add('active');
       }
     });
-
   </script>
 </body>
 

@@ -8,6 +8,11 @@ class League(models.Model):
     def __str__(self):
         return self.name
 
+    def clean_up_inactive(self):
+        """Mark the league as inactive if it has no active teams or seasons."""
+        if not self.team_set.filter(current_season__active=True).exists():
+            self.delete()  # Delete the league if no active teams or seasons exist
+
 
 class Season(models.Model):
     season_id = models.CharField(max_length=64, unique=True)
@@ -19,11 +24,17 @@ class Season(models.Model):
     def __str__(self):
         return f"Season {self.season_id}"
 
+    def mark_as_inactive(self):
+        """Mark the season as inactive."""
+        self.active = False
+        self.ended_at = timezone.now()
+        self.save()
+
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
     current_season = models.ForeignKey(Season, on_delete=models.CASCADE)
-    league = models.ForeignKey(League, on_delete=models.CASCADE, null=True, blank=True)  # ✅ now FK
+    league = models.ForeignKey(League, on_delete=models.CASCADE, null=True, blank=True)
     streak = models.IntegerField(default=0)
     wins = models.IntegerField(default=0)
     losses = models.IntegerField(default=0)
@@ -44,7 +55,7 @@ class Match(models.Model):
     away_team = models.CharField(max_length=255)
     home_score = models.IntegerField(null=True, blank=True)
     away_score = models.IntegerField(null=True, blank=True)
-    league = models.CharField(max_length=255, blank=True, null=True)  # 
+    league = models.CharField(max_length=255, blank=True, null=True)
     processed = models.BooleanField(default=False)
     fetched_at = models.DateTimeField(default=timezone.now)
 

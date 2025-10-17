@@ -41,5 +41,15 @@ primary_region = "jnb"
 
 [[vm]]
   processes = ["worker"]
-  size = "shared-cpu-1x"
+  size = "performance-2x"
+  memory = "4GB"
   restart = { policy = "always", retries = 10 }
+
+[[statics]]
+guest_path = "/bet9ja_tracker/static"
+url_prefix = "/static/"
+
+[[services.http_checks]]
+interval = 10000
+timeout = 2000
+path = "/health/"

@@ -17,10 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from bet9ja_tracker.views import health_check
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("leagues/", include("tracker.urls")),
-    path("", lambda request: redirect("league-home")),  # redirect root → league list
+    path("", lambda request: redirect("league-home")),
+    path("health/", health_check)
 ]
 

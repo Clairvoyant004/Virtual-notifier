@@ -27,7 +27,9 @@ SECRET_KEY = 'django-insecure-aoic!em^o3inff2augo_nex%(j&w3d^z%bwqq!nb0wcz84&1le
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['virtual-notifier.fly.dev']
+
+ALLOWED_HOSTS = ["*", "localhost", "127.0.0.1", ".fly.dev"]
+
 
 
 # Application definition
@@ -78,11 +80,7 @@ WSGI_APPLICATION = 'bet9ja_tracker.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': 
-        #'ENGINE': 'django.db.backends.sqlite3',
-        #'NAME': BASE_DIR / 'db.sqlite3',
-        dj_database_url.config(default=os.environ.get("DATABASE_URL"))
-
+    'default': dj_database_url.config(default=os.environ.get("DATABASE_URL"))
 }
 
 

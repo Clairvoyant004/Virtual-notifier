@@ -7,7 +7,9 @@ from django.db import transaction
 from tracker.models import Season, Team, Match, League
 from playwright.sync_api import sync_playwright
 from tracker.utils.playwright_helpers import discover_season_id_via_playwright
-
+import os
+from django.utils import timezone
+#is_fly = os.environ.get("FLY_APP_NAME") is not None
 
 
 API_FEED_FMT = (
@@ -16,7 +18,7 @@ API_FEED_FMT = (
 )
 
 # we only care about these offsets relative to base season
-RELEVANT_OFFSETS = [0, 2, 3, 4, 5, 6, 7]
+RELEVANT_OFFSETS = [0,1, 2, 3, 4, 5, 6, 7]
 
 
 class Command(BaseCommand):
@@ -37,12 +39,23 @@ class Command(BaseCommand):
                     time.sleep(30)
                     continue
 
-                season, created = Season.objects.get_or_create(season_id=str(current_season_id))
-                if created:
-                    season.started_at = datetime.utcnow()
-                    season.active = True
-                    season.save()
-                    self.stdout.write(f"🏁 New season {season.season_id} created")
+                # Deactivate all previous seasons not in the relevant offsets
+                Season.objects.exclude(season_id__in=[
+    str(int(current_season_id) + offset) for offset in RELEVANT_OFFSETS
+]).update(active=False)
+
+# Delete all teams from ended seasons
+                Team.objects.filter(current_season__active=False).delete()
+
+# Remove leagues with no active teams or seasons
+                League.objects.filter(team__current_season__active=False).delete()
+
+# Create and activate the new season
+                season, _ = Season.objects.get_or_create(season_id=str(current_season_id))
+                season.started_at = datetime.utcnow()
+                season.active = True
+                season.save()
+                self.stdout.write(f"🏁 New season {season.season_id} created and old ones deactivated")
 
             base_id = int(current_season_id)
 
@@ -60,6 +73,8 @@ class Command(BaseCommand):
             base_matches, _ = self.fetch_all_matches(current_season_id)
             if base_matches and self.season_has_ended(base_matches):
                 season.active = False
+                # Delete all teams from the just-ended season
+                Team.objects.filter(current_season=season).delete()
                 season.ended_at = datetime.utcnow()
                 season.save()
                 self.stdout.write(f"🏁 Season {current_season_id} ended")
@@ -73,10 +88,20 @@ class Command(BaseCommand):
             browser = p.chromium.launch(headless=False,args=[
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--disable-infobars",
+        "--disable-dev-shm-usage",
         "--disable-gpu",
-        "--window-position=-32000,-32000",  # hides offscreen
+        "--single-process",
+        "--disable-background-networking",
+        "--disable-default-apps",
+        "--disable-extensions",
+        "--disable-sync",
+        "--metrics-recording-only",
+        "--mute-audio",
+        "--no-first-run",
+        "--no-zygote",
         "--window-size=1,1",
+        "--disable-blink-features=AutomationControlled",
+        "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118 Safari/537.36"
     ])
             page = browser.new_page()
             page.goto("https://st-cdn001.akamaized.net/bet9javirtuals/en/1/category/1111")
@@ -148,6 +173,11 @@ class Command(BaseCommand):
     def process_matches_for_season(self, matches, season_id, league_obj):
         new_count = 0
         season_obj, _ = Season.objects.get_or_create(season_id=str(season_id))
+
+        # Mark the season as active
+        season_obj.active = True
+        season_obj.save()
+
         sorted_matches = sorted(matches, key=lambda x: (x.get("round", 0), x.get("_id", 0)))
 
         for m in sorted_matches:
@@ -186,20 +216,20 @@ class Command(BaseCommand):
                 defaults={"league": league_obj, "streak": 0}
             )
 
-            # force correct league
+            # Force correct league
             if home.league != league_obj:
                 home.league = league_obj
             if away.league != league_obj:
                 away.league = league_obj
 
-            # update streaks only
+            # Update streaks only
             if hg == ag:
                 home.streak = 0
                 away.streak = 0
             else:
                 home.streak = (home.streak or 0) + 1
                 away.streak = (away.streak or 0) + 1
-                
+
             home.save()
             away.save()
             new_count += 1
@@ -219,3 +249,14 @@ class Command(BaseCommand):
             m.get("result", {}).get("away") is not None
             for m in last_round_matches
         )
+
+    def clean_up_inactive_data(self):
+        """Clean up inactive leagues, seasons, and teams."""
+        # Mark ended seasons as inactive
+        for season in Season.objects.filter(active=True):
+            if season.ended_at and season.ended_at < timezone.now():
+                season.mark_as_inactive()
+
+        # Remove leagues with no active teams or seasons
+        for league in League.objects.all():
+            league.clean_up_inactive()
